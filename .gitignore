@@ -1,0 +1,73 @@
+# ============ 工艺厂 / EDA 厂商的受限内容: 不要提交 ============
+# 版图 (合并了标准单元版图), 库, 工艺文件
+*.gds
+*.oas
+*.ndm
+*.db
+*.lib
+*.lef
+*.tf
+*.tluplus
+*.nxtgrd
+*.itf
+0_lib/ndm/
+# Calibre: 运行目录里有规则文件的副本, 日志里也会原样打印规则
+5_DRC/*
+!5_DRC/run.sh
+5_LVS/*
+!5_LVS/run.sh
+# 含工艺设计规则数值的文件 (层号等): 各人按自己的 PDK 填, 见 README
+4_icc2/icc2_files/antenna.tcl
+4_icc2/icc2_files/gdsout_text.map
+4_icc2/icc2_files/text_layers.tcl
+# 门级网表, 时序/功耗报告, 延迟与寄生文件: 里面是标准单元库的单元名和特征数据
+1_dc/output/
+4_icc2/postlayout/
+4_innovus/postdc/
+4_innovus/postlayout/
+7_StarRC/reports_spef/
+8_pt/reports/
+*/reports/
+*.sdf
+*.spef
+*.def
+*.ddc
+*.svf
+
+# ============ 工具运行时生成的中间文件 ============
+*.log
+*.rpt
+# VCS / Verdi
+csrc/
+simv*
+*.daidir/
+*.fsdb
+*.vpd
+*.key
+vc_hdrs.h
+verdiLog/
+novas.*
+DVEfiles/
+# Design Compiler
+1_dc/work/
+alib-*/
+filenames*.log
+# Formality
+FM_WORK*/
+formality*_svf/
+fm_shell_command.*
+*.lck
+# IC Compiler II / 库管理器
+4_icc2/work/
+4_innovus/work/
+0_lib/*/
+!0_lib/tcl/
+PreFrameCheck/
+*.ems
+*.dlib/
+# PrimeTime
+8_pt/.rce/
+# 其他
+*.swp
+*~
+.DS_Store

@@ -1,0 +1,13 @@
+#==============================================================================
+# top.upf : 最简单的电源意图描述. 整个设计一个电源域, 一组电源 VDD / 地 VSS.
+#   ICC2 靠它知道电源线网的存在, 之后才能给每个工艺角设电压, 并自动连接单元的电源引脚.
+#   同时会在顶层生成 VDD, VSS 两个电源端口.
+#==============================================================================
+create_power_domain TOP
+create_supply_port VDD
+create_supply_port VSS
+create_supply_net  VDD -domain TOP
+create_supply_net  VSS -domain TOP
+connect_supply_net VDD -ports VDD
+connect_supply_net VSS -ports VSS
+set_domain_supply_net TOP -primary_power_net VDD -primary_ground_net VSS

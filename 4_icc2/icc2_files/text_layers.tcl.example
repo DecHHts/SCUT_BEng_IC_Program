@@ -1,0 +1,3 @@
+# text_layers.tcl (模板, 复制成 text_layers.tcl 后填写)
+#   金属层名 -> 该层 "pin text" 的 GDS 层号. 层号查 Calibre LVS 规则文件里的 TEXT LAYER 语句.
+array set textlayer {METAL1 <层号> METAL2 <层号> METAL3 <层号> METAL4 <层号> METAL5 <层号> METAL6 <层号>}
