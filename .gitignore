@@ -16,7 +16,7 @@
 !5_DRC/run.sh
 5_LVS/*
 !5_LVS/run.sh
-# 含工艺设计规则数值的文件 (层号等): 各人按自己的 PDK 填, 见 README
+# 含工艺设计规则数值的两个小文件 (层号, 天线比例): 各人按自己的 PDK 填, 见 README
 4_icc2/icc2_files/antenna.tcl
 4_icc2/icc2_files/gdsout_text.map
 4_icc2/icc2_files/text_layers.tcl

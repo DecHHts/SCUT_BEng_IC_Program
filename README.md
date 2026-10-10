@@ -1,61 +1,74 @@
-# function_gen：从 RTL 到版图的完整练习（题目版）
+# function_gen：从 RTL 到版图的完整练习（完整版）
 
-用一道小题目把数字集成电路的全流程走一遍：设计一个定点运算电路，验证、综合、布局布线、版图验证、时序签核、后仿。
+这是跑通全流程的参考实现。想自己做一遍的话，先看 [`main`](../../tree/main) 分支的题目版。
 
 ```
         a · b · cos(2π · c / 4096)
-y = ───────────────────────────────
+y = ───────────────────────────────          200 MHz，误差 ±4 LSB
            (a + d) · 4096
 ```
 
-| 项目 | 要求 |
+题目、环境要求和流程说明见 [`docs/function_gen项目说明.pdf`](docs/function_gen项目说明.pdf)。
+
+## 结果
+
+在 VCS / Verdi、Design Compiler、Formality、IC Compiler II（X-2025.06）、Calibre 2025、PrimeTime X-2025.06 上，用一套 0.18 µm 1.8 V 7 轨 6 层金属的标准单元库从头到尾跑通。
+
+| 项目 | 结果 |
 | --- | --- |
-| 数据格式 | a、b、c、d 为 12 位无符号整数；y 为 13 位有符号数（真实值 = y / 4096） |
-| 端口 | 输入只有 `a[11:0]`、`b[11:0]`、`c[11:0]`、`e`、`clk`；输出 `y[12:0]`。d 通过 `e` 串行写入 |
-| 精度 | 误差不超过 y 的 ±4 个最低位 |
-| 时序 | 200 MHz；建立时间不确定度 1 ns，保持时间不确定度 300 ps |
-| 目标 | 满足以上条件的前提下，输入到输出的延迟拍数尽量小 |
+| 结构 | 18 拍流水线：输入寄存 1 拍；乘法、余弦查表、除数准备并行 4 拍；逐位除法并同时累加 12 拍；输出 1 拍 |
+| 功能（RTL / 综合后 / 布局布线后） | 102 376 组向量全部通过，最大误差 1.891 LSB，三次结果一致 |
+| 形式验证（综合后 / 布局布线后） | 各 1264 个比较点，全部等价 |
+| 时序签核（PrimeTime，三个工艺角） | 无违例；最慢角建立余量 +0.020 ns，最快角保持余量 +0.047 ns |
+| Calibre DRC | 只剩 6 条金属最小密度规则（模块级没有做金属填充） |
+| Calibre 天线 / LVS | 0 违例 / CORRECT |
+| 规模 | 约 584 × 581 µm，利用率 40%，标准单元面积约 127 000 µm²，触发器 1251 个 |
 
-**详细的题目说明、环境要求、每一步怎么做、会遇到哪些问题，见 [`docs/function_gen项目说明.pdf`](docs/function_gen项目说明.pdf)。**
+读这组数据时要知道的：
 
-## 这个分支里有什么
+- 建立时间余量只有 20 ps（已扣除 1 ns 不确定度），满足 200 MHz 但没有富余。
+- 输入输出延迟各取半个周期，没有按"输入紧贴时钟沿变化"的最严格情况约束。
+- 寄生参数是 IC Compiler II 提取并导出的 SPEF，不是签核级提取工具的结果；连线寄生只有典型工艺一种模型。
+- 18 拍不是下限。
 
-- 目录结构和能运行的**基础**流程脚本（VCS / Verdi、Design Compiler、Formality、IC Compiler II、Calibre、PrimeTime）
-- 一份验收用 testbench（`0_simulation_pre/tb/`，延迟拍数和串行格式要按你的设计改）
-- **没有 RTL**，`1_dc/tcl/top.sdc` 是待填的模板，后端脚本只做最基本的事
+## 设计文件
 
-需要你自己完成的：设计 RTL、写时序约束、解决综合和布局布线中的时序问题、让 DRC / 天线 / LVS 通过、让 PrimeTime 三个工艺角无违例。说明文档第 6 章列出了会遇到的问题和方向。
+| 文件 | 作用 |
+| --- | --- |
+| `function_gen.v` | 顶层：输入寄存、a+d、各模块连线和对齐 |
+| `d_rx.v` | 从 `e` 串行接收 d：空闲为 0，1 位起始位后跟 12 位数据，高位在前；没有复位，靠移位令牌自清零 |
+| `mul12.v` | 12×12 无符号乘法，4 拍 |
+| `cos_lut.v`、`cos_rom.vh` | 余弦：象限折叠，只存 1/4 周期共 1024 项，输出幅值和符号。表由 `gen_cos_rom.py` 生成 |
+| `div_acc.v`、`div_stage.v`、`acc_step.v` | 12 级恢复余数除法；每出一位商就把对应权重的余弦幅值累加进去，累加用进位保留形式 |
+| `tb/tb_function_gen.v` | testbench：实数参考模型，边界值加随机向量 |
 
-做完想对照，或者只想看完整流程怎么搭：切到 [`solution`](../../tree/solution) 分支。
+## 相对题目版补上了什么
 
-## 开始
+| 位置 | 内容 |
+| --- | --- |
+| `1_dc/tcl/top.sdc` | 时钟、不确定度、输入输出延迟 |
+| `1_dc/tcl/dc.tcl` | 让综合同时优化所有接近临界的路径 |
+| `0_lib`、`00_init.tcl` | 给填充和阱接触单元另建一个只含物理信息的参考库 |
+| `01_floorplan.tcl` | 布图后按固定间隔插阱接触单元 |
+| `03_pin.tcl` | 每个输入端口接一个天线保护二极管 |
+| `06_route.tcl`、`antenna.tcl` | 天线规则和自动修复；布线后带余量的几轮优化 |
+| `5_LVS/run.sh` | 去掉网表里没有器件的物理单元；读网表时区分大小写 |
 
-1. 准备 EDA 工具和一套 0.18 µm 标准单元库及 PDK（**不随仓库提供**，见说明文档第 3 章）。
-2. 改 `flow.cfg` 里的库路径；库的文件名、单元名和默认配置不一样时改 `common/env.sh`。
-3. 对照自己的 PDK，从模板生成两个本地文件（它们含设计规则数值，不进仓库）：
-   ```
-   cp 4_icc2/icc2_files/gdsout_text.map.example  4_icc2/icc2_files/gdsout_text.map
-   cp 4_icc2/icc2_files/text_layers.tcl.example  4_icc2/icc2_files/text_layers.tcl
-   ```
-4. `./check_env.sh` 看还缺什么。
-5. 把设计放进 `0_simulation_pre/rtl/`，按下表顺序往下做。
+## 复现
 
-| 步骤 | 目录 | 命令 |
-| --- | --- | --- |
-| 准备 | `0_lib` | `./run.sh` |
-| 1 RTL 仿真 | `0_simulation_pre` | `make`；`make vd` 看波形 |
-| 2 综合 | `1_dc` | `./run.sh` |
-| 3 形式验证 | `2_formality_postdc` | `./run.sh` |
-| 4 综合后仿真 | `3_simulation_postdc` | `make` |
-| 5 布局布线 | `4_icc2` | `./run.sh N`（跑到第 N 步）或 `./run.sh all` |
-| 6 形式验证 | `6_formality_postlayout` | `./run.sh` |
-| 7 版图验证 | `5_DRC`、`5_LVS` | `./run.sh` |
-| 8 寄生参数 | `7_StarRC` | `./run.sh` |
-| 9 时序签核 | `8_pt` | `./run.sh` |
-| 10 后仿 | `9_simulation_postlayout` | `make` |
+需要自备工具、标准单元库和 PDK（**不随仓库提供**）。改 `flow.cfg` 和 `common/env.sh`，再从模板生成三个含设计规则数值的本地文件：
+
+```
+cp 4_icc2/icc2_files/gdsout_text.map.example  4_icc2/icc2_files/gdsout_text.map
+cp 4_icc2/icc2_files/text_layers.tcl.example  4_icc2/icc2_files/text_layers.tcl
+cp 4_icc2/icc2_files/antenna.tcl.example      4_icc2/icc2_files/antenna.tcl
+```
+
+然后 `./check_env.sh`，按目录编号顺序执行（`0_lib` → `0_simulation_pre` → `1_dc` → … → `9_simulation_postlayout`），各步命令见说明文档第 5 章。
 
 ## 说明
 
 - 仓库不含任何工艺厂或 EDA 厂商的文件，也不含由它们生成的版图、网表、报告；`.gitignore` 已把这些排除，请不要提交。
-- 脚本是在一套具体的工具版本和工艺库上调通的，换环境后预计需要调整。脚本里的库名和单元名只是配置示例。
+- 公开版把天线比例、层号这些设计规则数值挪到了不进仓库的本地文件里，其余脚本与跑通时使用的一致。
+- 换工具版本或工艺库后预计需要调整，尤其是布局布线工具的选项名、库的单元名和版图验证规则文件的用法。
 - 题目来自一门数字集成电路设计课程的课程设计，这里是重新表述的版本。

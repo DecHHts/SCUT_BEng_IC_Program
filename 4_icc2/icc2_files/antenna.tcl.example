@@ -1,0 +1,15 @@
+#==============================================================================
+# antenna.tcl : 天线规则 模板. 复制成 antenna.tcl, 把 <...> 换成自己 PDK 天线规则文件里的数值
+#   金属: 侧壁面积 / 栅面积 <= <比例>; 线网上有二极管时放宽到  二极管面积 x <系数> + <常数>
+#   通孔: 通孔面积 / 栅面积 <= <比例>
+#   mode 4 = 按侧壁面积, 只算本层;  diode_mode 2 = 按上面的公式随二极管面积放宽
+#==============================================================================
+define_antenna_rule -mode 4 -diode_mode 2 -metal_ratio <金属比例> -cut_ratio <通孔比例>
+foreach m {METAL1 METAL2 METAL3 METAL4 METAL5} {
+    define_antenna_layer_rule -mode 4 -layer $m -ratio <金属比例> -diode_ratio {<最小二极管面积> 0 <系数> <常数>}
+}
+define_antenna_layer_rule -mode 4 -layer METAL6 -ratio <金属比例> -diode_ratio {<最小二极管面积> 0 <顶层系数> <顶层常数>}
+foreach v [get_object_name [get_layers -quiet -filter {layer_type==via_cut}]] {
+    define_antenna_layer_rule -mode 4 -layer $v -ratio <通孔比例> -diode_ratio {<最小二极管面积> 0 <系数> <常数>}
+}
+report_antenna_rules

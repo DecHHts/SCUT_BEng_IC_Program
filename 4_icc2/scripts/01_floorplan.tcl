@@ -13,4 +13,10 @@ if {[sizeof_collection [get_site_defs -quiet $env(SITE_DEF)]] > 0} {
     initialize_floorplan -core_utilization $env(CORE_UTIL) -side_ratio {1 1} \
                          -core_offset [list $m $m $m $m]
 }
+# 阱接触单元: 每行每隔 TAP_DISTANCE 放一个, 位置固定. 必须在布局之前放
+if {$env(WELLTAP_CELL) ne ""} {
+    create_tap_cells -lib_cell [expand_cells $env(WELLTAP_CELL)] -distance $env(TAP_DISTANCE) \
+                     -pattern every_row -skip_fixed_cells
+    puts "== 阱接触单元: [sizeof_collection [get_cells -quiet -hierarchical -filter {ref_name=~TAPCELL*}]] 个"
+}
 puts "\n== 核心区: [get_attribute [get_core_area] bbox]   芯片边界: [get_attribute [current_block] boundary_bbox]"

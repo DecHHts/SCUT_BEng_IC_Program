@@ -58,9 +58,9 @@ tsmc180)
     export ROUTE_TOP_LAYER=METAL4       # 信号线最高走到 M4, M5/M6 留给电源
     export TIE_CELLS="TIEHBWP7T TIELBWP7T"
     export FILL_CELLS="FILL64BWP7T FILL32BWP7T FILL16BWP7T FILL8BWP7T FILL4BWP7T FILL2BWP7T FILL1BWP7T"
-    # 阱接触单元, 天线保护二极管单元: 需要时自己填单元名, 并在布局布线脚本里用起来
-    export WELLTAP_CELL="" ENDCAP_CELL="" TAP_DISTANCE=""
-    export ANT_DIODE_CELL=""
+    # 这套库的单元不带阱接触: 每行每隔 TAP_DISTANCE 插一个 TAPCELL (闩锁规则要求晶体管附近一定距离内有接触)
+    export WELLTAP_CELL="TAPCELLBWP7T" ENDCAP_CELL="" TAP_DISTANCE=50
+    export ANT_DIODE_CELL="ANTENNABWP7T"
     export CLKBUF_CELLS="CKBD*BWP7T"
     export CLKINV_CELLS="CKND*BWP7T"
     # 综合时不使用: 三态, 锁存器, 门控时钟, 扫描触发器 (G* 开头的 ECO 单元库里已标 dont_use)
@@ -84,4 +84,4 @@ export DB_SYN="$DB_WST" OPCOND_SYN="$OPCOND_WST"      # 用最慢角
 
 # 设计文件 (顺序无关; cos_rom.vh 是被 include 的片段, 不能出现在这里)
 export RTL_DIR="$PROJ/0_simulation_pre/rtl"
-export RTL_FILES="function_gen.v"      # 把你自己的全部 .v 文件名列在这里 (空格分隔)
+export RTL_FILES="function_gen.v d_rx.v mul12.v cos_lut.v div_acc.v div_stage.v acc_step.v"

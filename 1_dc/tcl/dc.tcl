@@ -39,6 +39,8 @@ set_app_var verilogout_no_tri true
 # compile_ultra 需要 DC Ultra 许可; 如果报许可错误, 把下面两行换成:
 #     compile -map_effort high
 #     compile -incremental -map_effort high
+# 很多条路径都只差一点时, 让 DC 把离最差路径 0.3 ns 以内的一起优化
+set_critical_range 0.3 [current_design]
 compile_ultra -no_autoungroup
 compile_ultra -incremental -no_autoungroup
 
