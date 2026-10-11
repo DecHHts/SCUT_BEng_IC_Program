@@ -16,6 +16,12 @@
 
 ---
 
+<p align="center">
+  <img src="docs/images/layout_full.png" width="60%" alt="function_gen 版图全貌">
+</p>
+
+<p align="center"><sub>布局布线完成后的版图，约 584 × 581 µm</sub></p>
+
 这是 `function_gen` 的完整版：一份从 RTL 仿真一路做到后仿、每一步都跑通的参考实现。
 
 如果你还没做过这道题，建议先去 [`main`](../../tree/main) 分支自己试一遍。这里的每个"解法"单独看都只有几行脚本，但知道为什么需要它，比知道它怎么写重要得多。
@@ -31,6 +37,20 @@ $$
 </div>
 
 > 题目、环境要求和流程说明见 [**docs/function_gen项目说明.pdf**](docs/function_gen项目说明.pdf)。
+
+## 它算出来的东西
+
+<p align="center">
+  <img src="docs/images/wave_cosine.png" width="92%" alt="y 的模拟波形: 三段幅度依次减半的余弦">
+</p>
+
+<p align="center"><sub>固定 a、d，让 c 连续扫过两个周期，b 依次取 4095、2048、1024：把 y 按有符号数画成模拟波形，是三段幅度减半的余弦</sub></p>
+
+<p align="center">
+  <img src="docs/images/wave_serial.png" width="92%" alt="通过 e 串行写入 d">
+</p>
+
+<p align="center"><sub>d 没有自己的端口，从 <code>e</code> 一位一位送进来。此图按 RTL 仿真的逐拍数据绘制</sub></p>
 
 ## 结果
 
@@ -57,6 +77,12 @@ $$
 
 ## 设计
 
+<p align="center">
+  <img src="docs/images/schematic_top.png" width="80%" alt="顶层原理图">
+</p>
+
+<p align="center"><sub>顶层原理图：带斜线的方块是寄存器，带 ƒ 的方块是 a + d 这部分组合逻辑，三条通路最后汇入 <code>div_acc</code></sub></p>
+
 ```mermaid
 flowchart LR
     IN[输入寄存<br>1 拍] --> MUL[12×12 乘法<br>4 拍]
@@ -79,6 +105,23 @@ flowchart LR
 | `cos_lut.v`、`cos_rom.vh` | 象限折叠后只存 1/4 周期共 1024 项，输出幅值和符号。表由 `gen_cos_rom.py` 生成 |
 | `div_acc.v`、`div_stage.v`、`acc_step.v` | 12 级恢复余数除法；累加用进位保留形式，最后一拍才做进位传播 |
 | `tb/tb_function_gen.v` | testbench：实数参考模型，边界值加随机向量 |
+
+## 版图
+
+<table>
+  <tr>
+    <td width="33%"><img src="docs/images/layout_modules.png" alt="按模块着色的布局"></td>
+    <td width="33%"><img src="docs/images/layout_power.png" alt="电源网络"></td>
+    <td width="33%"><img src="docs/images/layout_clock.png" alt="时钟网络"></td>
+  </tr>
+  <tr>
+    <td align="center" valign="top"><sub><b>各模块落在哪里</b><br>黄：除法累加，占一半以上面积<br>蓝：余弦查表　绿：乘法　红：串行接收</sub></td>
+    <td align="center" valign="top"><sub><b>电源网络</b><br>顶上两层金属做环和 7 对竖直电源条<br>139 根单元行电源轨</sub></td>
+    <td align="center" valign="top"><sub><b>时钟网络</b><br>从顶边的时钟引脚进入<br>分到 1251 个触发器</sub></td>
+  </tr>
+</table>
+
+除了 6000 多个逻辑单元，版图里还有 1518 个阱接触单元、40 个天线保护二极管（37 个输入端口各一个，另有 3 个是布线器自己加的），以及填满所有空位的填充单元。
 
 ## 一路上遇到的问题
 
