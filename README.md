@@ -23,6 +23,17 @@
 
 做完想对照，或者只想看完整流程长什么样，去 [`solution`](../../tree/solution) 分支。
 
+<table>
+  <tr>
+    <td width="38%"><img src="docs/images/layout_full.png" alt="参考设计的版图"></td>
+    <td width="62%"><img src="docs/images/wave_cosine.png" alt="y 的模拟波形"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>做到最后，你会得到这样一张版图</sub></td>
+    <td align="center"><sub>以及一个真的能算出余弦的电路（图为参考设计，c 连续扫描、b 逐段减半时的输出 y）</sub></td>
+  </tr>
+</table>
+
 ## 题目
 
 $$
